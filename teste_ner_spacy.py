@@ -83,7 +83,7 @@ def treino():
 
 ####################################################################################################
 
-def classificar_spacy(texto):
+def classificar_spacy(texto, controle, tamamnho):
 
 	nlp_ner = spacy.load("./model-best")
 
@@ -100,46 +100,20 @@ def classificar_spacy(texto):
 	
 	# print(df)
 	# z = input("")
-
-	# taman = df.shape[1]
 	
-	vlr_final, nome = processamento(df)
+	vlr_final, nome = processamento(df, controle, tamanho)
 
 
 
 
-	if nome == "procuração/substabelecimento" or nome == "petição inicial":
-		# print("-"*20)
-		# print("-"*20)
-		# print()
-		# print("100%% de certeza")
-		# print()
-		# print("-"*20)
-		# print("-"*20)
-		# print(texto)
-		# print("-"*20)
-		# print("-"*20)
-
-		# z = input("")
-		# print(df)
-		# z= input("")
+	if nome == "procuração":
 		return True,df,nome
 
-	# elif nome == "petição inicial": # procuração 80%
-		# print("-"*20)
-		# print("-"*20)
-		# print()
-		# print("80%% de certeza")
-		# print()
-		# print("-"*20)
-		# print("-"*20)
-		# print(texto)
-		# print("-"*20)
-		# print("-"*20)	
-		# z = input("")
-		# print(df)
-		# # z = input("")
-		# return True,df,nome
+	elif nome == "substabelecimento":
+		return True,df,nome
+
+	elif nome == "petição inicial":
+		return True,df,nome
 
 	else:
 		df = pd.DataFrame()

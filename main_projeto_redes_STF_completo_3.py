@@ -181,11 +181,13 @@ def ler_arquivos(path_2):
 	acoes_ruins = []
 	tipos_arqs = []
 
+
 	q = 0
 	for h in range(4):#len(pastas)):
 		q = q+1
 		print("Estamos na pasta", pastas[h],"número",q)
 		print('-------------------------------')
+		controle = "vazio"
 		cmn_pst = os.path.join(path_2,pastas[h])
 		arqs = os.listdir(cmn_pst)
 		for arq in arqs:
@@ -195,8 +197,6 @@ def ler_arquivos(path_2):
 			extensao = cmn_arq[-3:]
 
 
-			# se a extensão é txt
-		    # print(extensao)
 			if extensao == 'txt':
 				with open(cmn_arq, "rb") as arquivo:
 					texto = arquivo.read()
@@ -207,22 +207,18 @@ def ler_arquivos(path_2):
 					texto = texto.decode(encoding=str(codificacao), errors='ignore')
 					
 					### Filtro de tamanho ###
-					
+				
 					if len(texto) < 10000:
+						tamanho = 10
+					else:
+						tamanho = 100
 
-
-						# if re.search(rgx_subs, texto):
-						# 	print("É subs:",cmn_arq)
-						# 	print("--------------")
-						# 	z = input("")
-						# classificar(r'C:\Users\saylo\Desktop\projeto_redes_3\anotacao_procuracoes',texto)
-						x,df,nome = classificar_spacy(texto)
+						x,df,nome = classificar_spacy(texto,controle,tamanho)
 						if x == True:
-							# docs_bons.append(arq)
-							# df_final = pd.concat([df_final,df])
-							# print(cmn_arq)
-							# print("--------------")
-							# z = input("")
+				
+							if nome == "petição inicial":
+								controle = "ok"							
+
 							try:
 								oab_list = [item for item in df["OAB"].to_list()]
 								oab_list = " ".join(oab_list)
@@ -242,67 +238,54 @@ def ler_arquivos(path_2):
 									tipos_arqs.append(nome)
 						else:
 							df_relatorio = pd.concat([df_relatorio,df],ignore_index= True)
-					# else:
-					# 	print("Eliminado pelo tamanho")
-					#### avaliar a petição inicial aqui
+				
+				
 
 					
 
 			elif extensao == 'pdf':
 				with fitz.open(cmn_arq) as arquivo:
 					texto = []
-					pg_1 = []
+
 					for n in range(len(arquivo)):
 						texto.append(arquivo[n].get_text().strip())
-						if n == 0:
-						   pg_1.append(arquivo[n].get_text().strip())
-
+						
 					texto = " ".join(texto)
-					# if re.search(rgx_subs, texto):
-					# 	print("É subs:",cmn_arq)
-					# 	print("--------------")
-					# 	z = input("")
 
 					### Filtro de tamanho ###
 
 					if len(texto) < 10000:
+						tamanho = 10
+					else:
+						tamanho = 100
 
+					x,df,nome = classificar_spacy(texto,controle,tamanho)
+					if x == True:
+						if nome == "petição inicial":
+							controle = "ok"							
+
+						try:
+							oab_list = [item for item in df["OAB"].to_list()]
+							oab_list = " ".join(oab_list)
+							oabs = sep_representante(oab_list)
+							for oab in oabs:
+								oabs_final.append(oab)
+								acoes_boas.append(pastas[h])
+								arquivos_bons.append(arq)
+								tipos_arqs.append(nome)
+						
+						except:
+							# print("pegou pelo texto")
+							oabs = sep_representante(texto)
+							for oab in oabs:
+								oabs_final.append(oab)
+								acoes_boas.append(pastas[h])
+								arquivos_bons.append(arq)
+								tipos_arqs.append(nome)
+
+					else:
+						acoes_ruins.append(pastas[h])
 					
-						# classificar(r'C:\Users\saylo\Desktop\projeto_redes_3\anotacao_procuracoes',texto)
-						x,df,nome = classificar_spacy(texto)
-						if x == True:
-							# docs_bons.append(arq)
-							# df_final = pd.concat([df_final,df],ignore_index= True)
-							# print(cmn_arq)
-							# print("--------------")
-							# z = input("")
-							try:
-								oab_list = [item for item in df["OAB"].to_list()]
-								oab_list = " ".join(oab_list)
-								oabs = sep_representante(oab_list)
-								for oab in oabs:
-									oabs_final.append(oab)
-									acoes_boas.append(pastas[h])
-									arquivos_bons.append(arq)
-									tipos_arqs.append(nome)
-							
-							except:
-								# print("pegou pelo texto")
-								oabs = sep_representante(texto)
-								for oab in oabs:
-									oabs_final.append(oab)
-									acoes_boas.append(pastas[h])
-									arquivos_bons.append(arq)
-									tipos_arqs.append(nome)
-
-						else:
-							acoes_ruins.append(pastas[h])
-							# df.insert(loc = 0, column = "documento", value = arq)
-							# df_relatorio = pd.concat([df_relatorio,df], ignore_index= True)
-							# pass
-					# else:
-					# 	print("Eliminado pelo tamanho")
-						#### avaliar a petição inicial aqui
 
 
 	
@@ -318,8 +301,16 @@ def ler_arquivos(path_2):
 
 	df_relatorio.drop_duplicates(subset = ["Ações sem procuração ou inicial"], inplace = True)
 
-	# df_relatorio.insert(loc = 0, column = "documento", value = docs_ruins, allow_duplicates=True)
 	df_relatorio.to_excel('relatorio_redes_nao_encontrados.xlsx', index = False)
+
+#########################################################################################################
+'''
+- Montar os treinos e passar para a Helena anotar
+- Fazer os algoritmos da petição inicial
+- fazer os ajustes nos casos em que é um único doc - separar a inicial e o subs
+
+'''
+
 
 
 #########################################################################################################

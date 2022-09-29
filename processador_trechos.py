@@ -57,7 +57,7 @@ def forma_tuplas_stem(df):
 
 #########################################################################
 
-def compara_trechos_sub_proc(df1, df2):
+def compara_trechos_procuracoes(df1, df2):
 
 	colunas_df1 = list(df1.columns)
 	colunas_df2 = list(df2.columns)
@@ -96,32 +96,116 @@ def compara_trechos_sub_proc(df1, df2):
 									# print(stem_treino,"!=",stem_verif,"na coluna",col,"com o valor",vlr)
 
 
-	# print(contagem_matches)
-	# if "OAB" in colunas_match:
-	# 	print("temos",len(colunas_match),"variaveis nesse documento")
-	# 	print("-"*20)		
-	# 	return len(colunas_match)
-	# else:
-	# 	return 0
-	# print("temos",len(colunas_match),"variaveis nesse documento")
-	# print("-"*20)		
-	return len(colunas_match)
+	if len(colunas_match) >= 9:
+		return 50
+	else:
+		vlr_final = compara_trechos_substabelecimento(df1, df2)
+		return vlr_final
 
 
 ############################################################################
 
-# def compara_trechos_peticao(df1, df2):
+def compara_trechos_substabelecimento(df1, df2):
 
-## fazer essa função
+	colunas_df1 = list(df1.columns)
+	colunas_df2 = list(df2.columns)
+	texto_only = re.compile("[^A-Za-z\s]")
+
+	contagem_matches = 0
+	colunas_match = []
+
+	for col in colunas_df1:
+		for colmn in colunas_df2:
+			if col == colmn:
+				data1 = df1[col]
+				data2 = df2[colmn]
+				# trechos_treino = {str_stem:index for str_stem in data2.iloc[:, 0].to_list()}
+				# print(col)
+				# print(data1)
+				# print(data2)
+				# z= input("")
+				for n in range(len(data1)):
+					stem_verif = data1.iloc[n]
+					if str(stem_verif) != "nan":
+						stem_verif = re.sub(texto_only, "", stem_verif)
+						for j in range(len(data2)):
+							stem_treino = data2.iloc[j]
+							if str(stem_treino) != "nan":
+								stem_treino = re.sub(texto_only, "", stem_treino)
+								vlr = jellyfish.jaro_distance(stem_verif, stem_treino)
+								if vlr > 0.7:
+									# print(stem_treino,"=",stem_verif,"na coluna",col,"com o valor",vlr)
+									# contagem_matches = contagem_matches+1
+									if col not in colunas_match:
+										colunas_match.append(col)
+									# print("-----------------------------------")
+									break
+								# else:
+									# print(stem_treino,"!=",stem_verif,"na coluna",col,"com o valor",vlr)
+
+
+	if len(colunas_match) > "VALOR": # colocar o valor depois de fazer o treino e as variáveis 		
+		return 75
+	else:
+		return -1 
+
 
 
 ############################################################################
 
-def processamento(df):
+def compara_trechos_peticao(df1, df2):
+
+	colunas_df1 = list(df1.columns)
+	colunas_df2 = list(df2.columns)
+	texto_only = re.compile("[^A-Za-z\s]")
+
+	contagem_matches = 0
+	colunas_match = []
+
+	for col in colunas_df1:
+		for colmn in colunas_df2:
+			if col == colmn:
+				data1 = df1[col]
+				data2 = df2[colmn]
+				# trechos_treino = {str_stem:index for str_stem in data2.iloc[:, 0].to_list()}
+				# print(col)
+				# print(data1)
+				# print(data2)
+				# z= input("")
+				for n in range(len(data1)):
+					stem_verif = data1.iloc[n]
+					if str(stem_verif) != "nan":
+						stem_verif = re.sub(texto_only, "", stem_verif)
+						for j in range(len(data2)):
+							stem_treino = data2.iloc[j]
+							if str(stem_treino) != "nan":
+								stem_treino = re.sub(texto_only, "", stem_treino)
+								vlr = jellyfish.jaro_distance(stem_verif, stem_treino)
+								if vlr > 0.7:
+									# print(stem_treino,"=",stem_verif,"na coluna",col,"com o valor",vlr)
+									# contagem_matches = contagem_matches+1
+									if col not in colunas_match:
+										colunas_match.append(col)
+									# print("-----------------------------------")
+									break
+								# else:
+									# print(stem_treino,"!=",stem_verif,"na coluna",col,"com o valor",vlr)
+
+
+	if len(colunas_match) > "VALOR": # colocar o valor depois de fazer o treino e as variáveis 		
+		return 100
+	else:
+		return -1
+
+
+############################################################################
+
+def processamento(df, controle, tamanho):
 
 	planilha_treino = pd.read_excel("dados_treino_procuracoes.xlsx")
 
 	df_entidades = forma_tuplas_stem(df)
+	
 	try:
 		df_entidades.drop(columns="documento", inplace=True)
 	except:
@@ -129,33 +213,24 @@ def processamento(df):
 
 	df_treino = forma_tuplas_stem(planilha_treino)
 
-	vlr_final = compara_trechos_sub_proc(df_entidades, df_treino)
-	if 9 <= vlr_final >= 13:
-		nome = "procuração/substabelecimento"
-		return vlr_final, nome
-
-
-	##############################
+	if controle != "ok" and tamanho != 10:
+		vlr_final = compara_trechos_peticao(df_entidades, df_treino)
+		if vlr_final == 100:
+			nome =  "petição inicial"
+			return vlr_final, nome
 		
-	# comentar essa parte depois de fazer a função
+
+	vlr_final = compara_trechos_procuracoes(df_entidades, df_treino)
+	if vlr_final == 50:
+		nome = "procuração"
+		return vlr_final, nome
+	
+	elif vlr_final == 75:
+		nome = "substabelecimento"
+		return vlr_final, nome
 
 	else:
-		nome = "nada"
-		return vlr_final, nome
-
-	##############################
-
-
-
-	#### descomentar depois de fazer a função da petição ######	
-
-	# else:
-	# 	vlr_final = compara_trechos_peticao(df1, df2)
-	# 	if "9" <= vlr_final >= "13":
-			# nome =  "petição inicial"
-	# 		return vlr_final, nome
-	# 	else:
-	# 		return -1, "nada"
+		return -1, "nada"
 
 
 
